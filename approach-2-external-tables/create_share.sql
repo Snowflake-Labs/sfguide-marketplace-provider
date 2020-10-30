@@ -8,7 +8,6 @@
 -- https://docs.snowflake.com/en/user-guide/views-secure.html
 -- Note that it is good practice to abstract the objects that other Snowflake customers can see through the use of Secure Views rather than sharing tables directly. Secure Views can be simple views or have account-based row-level security built into them (one Snowflake customer account see one slice of data, another Snowflake customer account sees a different slice). This script inclues an example of setting up row-level security at the bottom of the script.
 -- This accelerator also assumes that you are operating as a user with the ACCOUNTADMIN role. If you have implemented more fine-grained role permissions in Snowflake, there are likely tweaks to the code below that will be required based on how you have implemented roles and privileges.
--- This script also 
 
 -- Create a separate schema to align with the share to isolate your shared vs non-shared objects
 
