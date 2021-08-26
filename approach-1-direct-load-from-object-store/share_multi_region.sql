@@ -34,21 +34,28 @@ SELECT SYSTEM$GLOBAL_ACCOUNT_SET_PARAMETER('MY_PRIMARY_ACCOUNT', 'ENABLE_ACCOUNT
 
 SHOW REPLICATION ACCOUNTS;
 
--- Make a note of the snowflake_region and account name columns from the above query results
+-- Make a note of the organization, snowflake_region, and account name columns from the above query results
+
+-- Log in to each of the SECONDARY ACCOUNTS
+-- Enable replication for each account
+
+SELECT SYSTEM$GLOBAL_ACCOUNT_SET_PARAMETER('MY_SECONDARY_ACCOUNT', 'ENABLE_ACCOUNT_DATABASE_REPLICATION', 'TRUE');
+
+-- Return to PRIMARY ACCOUNT
 
 USE ROLE ACCOUNTADMIN;
 
 ALTER DATABASE MY_DB ENABLE REPLICATION TO ACCOUNTS
-MY_SECONDARY_REGION.MY_SECONDARY_ACCOUNT
+MY_ORGANIZATION.MY_SECONDARY_ACCOUNT
 -- repeat a comma separated list as needed
 ;
 
--- Using each SECONDARY ACCOUNTS
+-- In each of the SECONDARY ACCOUNTS
 -- Create replica database 
 
 CREATE DATABASE MY_DB
-AS REPLICA OF MY_SECONDARY_REGION.MY_SECONDARY_ACCOUNT.MY_DB
--- Where SNOWFLAKE_REGION.ACCOUNT_NAME is your PRIMARY account 
+AS REPLICA OF MY_ORGANIZATION.MY_PRIMARY_ACCOUNT.MY_DB
+-- Where MY_ORGANIZATION.MY_PRIMARY_ACCOUNT is your PRIMARY account 
 AUTO_REFRESH_MATERIALIZED_VIEWS_ON_SECONDARY = TRUE
 -- This guide has not discussed materialized views, which is a feature enabled in our ENTERPRISE edition, but if you decide to use this Snowflake feature in your PRIMARY MY_DB, you will likely want those materialized views to be refreshed in the SECONDARY versions as well
 ;
@@ -82,14 +89,14 @@ AUTO_RESUME = TRUE
 INITIALLY_SUSPENDED = TRUE
 ;
 
--- The example below assumes that this replication refresh task will be run on a cron schedule of every night at 3am America/Los Angeles time, reflected by the format which is documented in the link below. You can customize the schedule to your needs. Tasks can also be scheduled to run on an interval measured in minutes. See the documentation below for more details.
+-- The example below assumes that this replication refresh task will be run hourly, reflected by the format which is documented in the link below. You can customize the schedule to your needs. See the documentation below for more details.
 -- https://docs.snowflake.com/en/sql-reference/sql/create-task.html
  
 USE SCHEMA REPLICATION_CONTROL.PUBLIC;
 
 CREATE OR REPLACE TASK MY_DB_REPLICATION_TASK
 WAREHOUSE = REPLICATION_WH
-SCHEDULE = 'USING CRON 0 3 * * * America/Los_Angeles'
+SCHEDULE = '60 minute'
 AS 
 ALTER DATABASE MY_DB REFRESH
 ;
@@ -98,7 +105,7 @@ ALTER DATABASE MY_DB REFRESH
 
 ALTER TASK MY_TASK RESUME;
 
--- Create the same share in the SECONDARY account(s) as the PRIMARY account 
+-- Optionally, create the same share in the SECONDARY account(s) as the PRIMARY account. This can also be done from the UI when fulfilling a request.
 
 CREATE OR REPLACE SHARE MY_SHARE;
 
